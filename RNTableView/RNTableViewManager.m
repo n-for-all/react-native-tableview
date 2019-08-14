@@ -12,6 +12,7 @@
 #import <React/RCTConvert.h>
 #import <React/RCTFont.h>
 #import <React/RCTUIManager.h>
+#import <React/RCTComponentEvent.h>
 
 @implementation RNTableViewManager
 
@@ -64,6 +65,7 @@ RCT_EXPORT_VIEW_PROPERTY(moveWithinSectionOnly, BOOL)
 RCT_EXPORT_VIEW_PROPERTY(allowsToggle, BOOL)
 RCT_EXPORT_VIEW_PROPERTY(allowsMultipleSelection, BOOL)
 RCT_EXPORT_VIEW_PROPERTY(alwaysBounceVertical, BOOL)
+RCT_EXPORT_VIEW_PROPERTY(actionButtons, NSArray)
 
 RCT_EXPORT_VIEW_PROPERTY(onEndDisplayingCell, RCTBubblingEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onWillDisplayCell, RCTBubblingEventBlock)
@@ -251,9 +253,14 @@ RCT_CUSTOM_VIEW_PROPERTY(footerFontFamily, NSString, RNTableView)
     view.footerFont = [RCTFont updateFont:view.footerFont withFamily:json ?: defaultView.font.familyName];
 }
 
-RCT_EXPORT_METHOD(sendNotification:(NSDictionary *)data)
+RCT_EXPORT_METHOD(sendNotification:(NSDictionary *)data
+                  reactTag:(nonnull NSNumber *)reactTag)
 {
-    [self.bridge.eventDispatcher sendInputEventWithName:@"onItemNotification" body:data];
+    
+    RCTComponentEvent *event = [[RCTComponentEvent alloc] initWithName:@"onItemNotification"
+                                                               viewTag:reactTag
+                                                                  body:data];
+    [self.bridge.eventDispatcher sendEvent:event];
 }
 
 RCT_EXPORT_METHOD(scrollTo:(nonnull NSNumber *)reactTag

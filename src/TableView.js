@@ -7,6 +7,7 @@ import {
   PointPropType,
   findNodeHandle,
   View,
+  processColor
 } from 'react-native';
 import TableViewSection from './TableViewSection';
 import TableViewCell from './TableViewCell';
@@ -48,6 +49,7 @@ function stateFromProps(props) {
   const sections = [];
   const additionalItems = [];
   const children = [];
+  let actions = [];
 
   // iterate over sections
   React.Children.forEach(props.children, (section, index) => {
@@ -108,10 +110,23 @@ function stateFromProps(props) {
     }
   });
 
+  if(props.actionButtons && props.actionButtons.length > 0){
+      actions = props.actionButtons.map((_button) => {
+          if(_button.backgroundColor){
+              _button.backgroundColor = processColor(_button.backgroundColor);
+          }
+          if(_button.icon && typeof _button.icon === 'number'){
+              _button.icon = resolveAssetSource(_button.icon);
+          }
+          return _button;
+      })
+  }
+
   return {
     sections,
     additionalItems,
     children,
+    actions
   };
 }
 
@@ -185,6 +200,7 @@ class TableView extends React.Component {
     canRefresh: PropTypes.bool,
     cellSeparatorInset: EdgeInsetsPropType,
     cellLayoutMargins: EdgeInsetsPropType,
+    actionButtons: PropTypes.Array
   };
 
   static defaultProps = {
@@ -234,6 +250,8 @@ class TableView extends React.Component {
     onAccessoryPress: () => null,
     onWillDisplayCell: () => null,
     onEndDisplayingCell: () => null,
+
+    actionButtons: []
   };
 
   constructor(props) {
@@ -378,6 +396,7 @@ class TableView extends React.Component {
           additionalItems={this.state.additionalItems}
           scrollIndicatorInsets={this.props.contentInset}
           {...this.props}
+          actionButton={this.state.actions}
           onScroll={(...args) => this._onScroll(...args)}
           onPress={(...args) => this._onPress(...args)}
           onAccessoryPress={(...args) => this._onAccessoryPress(...args)}

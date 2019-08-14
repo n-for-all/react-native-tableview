@@ -27,6 +27,7 @@
 
 @property(nonatomic, copy) NSMutableArray *sections;
 @property(nonatomic, copy) NSArray *additionalItems;
+@property(nonatomic, copy) NSArray *_actionButtons;
 @property(nonatomic, strong) NSString *json;
 @property(nonatomic, strong) NSString *filter;
 @property(nonatomic, strong) NSArray *filterArgs;

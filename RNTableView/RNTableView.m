@@ -64,6 +64,11 @@
     _sectionIndexTitlesEnabled = sectionIndexTitlesEnabled;
 }
 
+-(void)setActionButtons:(NSArray*)actionButtons
+{
+    self._actionButtons = actionButtons;
+}
+
 - (void)insertReactSubview:(UIView *)subview atIndex:(NSInteger)atIndex
 {
     // will not insert because we don't need to draw them
@@ -591,6 +596,126 @@ RCT_NOT_IMPLEMENTED(-initWithCoder:(NSCoder *)aDecoder)
         return sourceIndexPath;
     }
     return proposedDestinationIndexPath;
+}
+- (UISwipeActionsConfiguration *)tableView:(UITableView *)tableView trailingSwipeActionsConfigurationForRowAtIndexPath:(NSIndexPath *)indexPath{
+    
+    NSMutableDictionary *newValue = [self dataForRow:indexPath.item section:indexPath.section];
+    newValue[@"target"] = self.reactTag;
+    newValue[@"selectedIndex"] = [NSNumber numberWithInteger:indexPath.item];
+    newValue[@"selectedSection"] = [NSNumber numberWithInteger:indexPath.section];
+    
+    NSMutableArray* actions = [[NSMutableArray alloc] init];
+    if(self._actionButtons){
+        for (NSDictionary* button in self._actionButtons)
+        {
+            UIContextualActionStyle rowActionStyle = UIContextualActionStyleNormal;
+            if(button[@"rowActionStyle"]){
+                if(button[@"rowActionStyle"] == @"normal"){
+                    rowActionStyle = UIContextualActionStyleNormal;
+                }else if(button[@"rowActionStyle"] == @"destructive"){
+                    rowActionStyle = UIContextualActionStyleDestructive;
+                }else {
+                    rowActionStyle = UIContextualActionStyleNormal;
+                }
+            }
+            
+            UIContextualAction* moreAction =  [UIContextualAction contextualActionWithStyle:rowActionStyle title:button[@"label"] handler:^(UIContextualAction * _Nonnull action, __kindof UIView * _Nonnull sourceView, void (^ _Nonnull completionHandler)(BOOL)) {
+                if(button[@"mode"]){
+                    newValue[@"mode"] = button[@"mode"];
+                }else{
+                    newValue[@"mode"] = button[@"label"];
+                }
+                self.onChange(newValue);
+                completionHandler(true);
+            }];
+            if(button[@"backgroundColor"]){
+                moreAction.backgroundColor = [RCTConvert UIColor:button[@"backgroundColor"]];
+            }
+            if(button[@"icon"]){
+                UIImage *image;
+                @try{
+                    if ([button[@"icon"] isKindOfClass:[NSString class]]){
+                        image = [UIImage imageNamed:button[@"icon"]];
+                    } else {
+                        image = [RCTConvert UIImage:button[@"icon"]];
+                    }
+                    CGSize newSize = CGSizeMake(20, 20);
+                    
+                    CGFloat ratioW = image.size.width / newSize.width;
+                    CGFloat ratioH = image.size.height / newSize.height;
+                    
+                    CGFloat ratio = image.size.width / image.size.height;
+                    
+                    CGSize showSize = CGSizeZero;
+                    
+                    if (ratioW > ratioH) {
+                        showSize.width = newSize.width;
+                        showSize.height = showSize.width / ratio;
+                    } else {
+                        showSize.height = newSize.height;
+                        showSize.width = showSize.height * ratio;
+                    }
+
+                    
+                    UIGraphicsBeginImageContextWithOptions(showSize, NO, 0.0);
+                    [image drawInRect:CGRectMake(0, 0, showSize.width, showSize.height)];
+                    moreAction.image = UIGraphicsGetImageFromCurrentImageContext();
+                    UIGraphicsEndImageContext();
+                } @catch (NSException* exception) {
+                    NSLog(@"Got exception: %@    Reason: %@", exception.name, exception.reason);
+                }
+            }
+            [actions addObject:moreAction];
+        }
+    }
+    
+    if (@available(iOS 11.0, *)) {
+        return [UISwipeActionsConfiguration configurationWithActions:actions];
+    } else {
+        // Fallback on earlier versions
+        return nil;
+    }
+}
+
+
+- (NSArray *)tableView:(UITableView *)tableView editActionsForRowAtIndexPath:(NSIndexPath *)indexPath {
+    NSMutableDictionary *newValue = [self dataForRow:indexPath.item section:indexPath.section];
+    newValue[@"target"] = self.reactTag;
+    newValue[@"selectedIndex"] = [NSNumber numberWithInteger:indexPath.item];
+    newValue[@"selectedSection"] = [NSNumber numberWithInteger:indexPath.section];
+    
+    NSMutableArray* actions = [[NSMutableArray alloc] init];
+    if(self._actionButtons){
+        for (NSDictionary* button in self._actionButtons)
+        {
+            UITableViewRowActionStyle rowActionStyle = UITableViewRowActionStyleDefault;
+            if(button[@"rowActionStyle"]){
+                if(button[@"rowActionStyle"] == @"normal"){
+                    rowActionStyle = UITableViewRowActionStyleNormal;
+                }else if(button[@"rowActionStyle"] == @"destructive"){
+                    rowActionStyle = UITableViewRowActionStyleDestructive;
+                }else {
+                    rowActionStyle = UITableViewRowActionStyleNormal;
+                }
+            }
+            UITableViewRowAction *moreAction = [UITableViewRowAction rowActionWithStyle:rowActionStyle title:button[@"label"] handler:^(UITableViewRowAction *action, NSIndexPath *indexPath){
+                // maybe show an action sheet with more options
+                if(button[@"mode"]){
+                    newValue[@"mode"] = button[@"mode"];
+                }else{
+                    newValue[@"mode"] = button[@"label"];
+                }
+                self.onChange(newValue);
+            }];
+            if(button[@"backgroundColor"]){
+                moreAction.backgroundColor = [RCTConvert UIColor:button[@"backgroundColor"]];
+            }
+            [actions addObject:moreAction];
+        }
+    }
+    
+    return actions;
+
 }
 
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath { //implement the delegate method
