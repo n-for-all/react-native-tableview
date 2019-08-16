@@ -200,7 +200,7 @@ class TableView extends React.Component {
     canRefresh: PropTypes.bool,
     cellSeparatorInset: EdgeInsetsPropType,
     cellLayoutMargins: EdgeInsetsPropType,
-    actionButtons: PropTypes.Array
+    actionButtons: PropTypes.array
   };
 
   static defaultProps = {
@@ -251,7 +251,7 @@ class TableView extends React.Component {
     onWillDisplayCell: () => null,
     onEndDisplayingCell: () => null,
 
-    actionButtons: []
+    actionButtons: null
   };
 
   constructor(props) {
